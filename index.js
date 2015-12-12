@@ -121,7 +121,6 @@ function Sprite() {
       position: [blockX * game.blockSize, blockY * game.blockSize],
       fixedRotation: true
     })
-    console.log('sprite pixel width', blockWidth * game.blockSize)
     this.physicsShape = new p2.Box({width: blockWidth * game.blockSize, height: blockHeight * game.blockSize})
     this.physicsBody.addShape(this.physicsShape)
   }
@@ -157,6 +156,7 @@ function Car(blockX, blockY) {
   this.height = 1
   this.jumpForce = 500
   this.jumpDelay = 100
+  this.hasFootingPadding = 5
   this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
   this.accelerate = function() {
     if (this.hasFooting) this.physicsBody.applyForce([500, 0])
@@ -171,16 +171,19 @@ function Car(blockX, blockY) {
   }
   this.checkIfHasFooting = function() {
     for (var sprite in game.sprites) {
-      var currentSprite = game.sprites[sprite]
-      var car = this.physicsBody
-      var carShape = this.physicsShape
-      var other = currentSprite.physicsBody
-      var otherShape = currentSprite.physicsShape
-      var padding = 2
-      if (car.overlaps(other) &&
-        car.position[1] < other.position[1] &&
-        car.position[0] > other.position[0] - carShape.width + padding &&
-        car.position[0] < other.position[0] + otherShape.width - padding) {
+      var other = game.sprites[sprite]
+      var carPosition = [
+        this.physicsBody.position[0] - this.physicsShape.width / 2,
+        this.physicsBody.position[1] - this.physicsShape.height / 2
+      ]
+      var otherPosition = [
+        other.physicsBody.position[0] - other.physicsShape.width / 2,
+        other.physicsBody.position[1] - other.physicsShape.height / 2
+      ]
+      if (this.physicsBody.overlaps(other.physicsBody) &&
+        carPosition[1] < otherPosition[1] &&
+        carPosition[0] > otherPosition[0] - this.physicsShape.width + this.hasFootingPadding &&
+        carPosition[0] < otherPosition[0] + other.physicsShape.width - this.hasFootingPadding) {
           this.hasFooting = true
           return
         }
