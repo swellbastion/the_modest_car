@@ -91,7 +91,7 @@ function Game() {
       var currentType = level[type]
       for (var sprite in currentType) {
         var currentSprite = currentType[sprite]
-        that.addSprite( new window[type](currentSprite[0], currentSprite[1]) )
+        that.addSprite( new window[type](currentSprite) )
       }
     }
   }
@@ -120,51 +120,50 @@ function Game() {
 }
 
 function Sprite() {
-  this.setupDescendant = function(blockX, blockY, blockWidth, blockHeight, mass) {
+  this.setupDescendant = function(blockDimensions, mass) {
     this.physicsBody = new p2.Body({
       mass: mass,
-      position: [blockX * game.blockSize, blockY * game.blockSize],
+      position: [blockDimensions[0] * game.blockSize, blockDimensions[1] * game.blockSize],
       fixedRotation: true
     })
-    this.physicsShape = new p2.Box({width: blockWidth * game.blockSize, height: blockHeight * game.blockSize})
+    this.physicsShape = new p2.Box({width: blockDimensions[2] * game.blockSize, height: blockDimensions[3] * game.blockSize})
     this.physicsBody.addShape(this.physicsShape)
   }
 }
 
 Scenery.prototype = new Sprite()
-function Scenery(blockX, blockY, blockWidth, blockHeight) {
+function Scenery() {
   this.mass = 0
 }
 
 Mover.prototype = new Sprite()
-function Mover(blockX, blockY, blockWidth, blockHeight) {
+function Mover() {
   this.mass = 1
 }
 
 Bush.prototype = new Scenery()
-function Bush(blockX, blockY) {
-  this.width = 1
-  this.height = 1
-  this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
+function Bush(blockDimensions) {
+  blockDimensions[2] = 1
+  blockDimensions[3] = 1
+  this.setupDescendant(blockDimensions, this.mass)
 }
 
-GroundBlock.prototype = new Scenery()
-function GroundBlock(blockX, blockY) {
-  this.width = 5
-  this.height = 1
-  this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
+Ground.prototype = new Scenery()
+function Ground(blockDimensions) {
+  this.setupDescendant(blockDimensions, this.mass)
 }
 
 Car.prototype = new Mover()
-function Car(blockX, blockY) {
-  this.width = 1
-  this.height = 1
-  this.jumpForce = 500
+function Car(blockDimensions) {
+  blockDimensions[2] = 1
+  blockDimensions[3] = 1
+  this.jumpForce = [0, -500]
+  this.accelerateForce = [500, 0]
   this.jumpDelay = 100
-  this.hasFootingPadding = 5
-  this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
+  this.hasFootingPadding = 1
+  this.setupDescendant(blockDimensions, this.mass)
   this.accelerate = function() {
-    if (this.hasFooting) this.physicsBody.applyForce([500, 0])
+    if (this.hasFooting) this.physicsBody.applyForce(this.accelerateForce)
   }
   this.mayJump = function() {
     var now = Date.now()
@@ -186,9 +185,7 @@ function Car(blockX, blockY) {
         other.physicsBody.position[1] - other.physicsShape.height / 2
       ]
       if (this.physicsBody.overlaps(other.physicsBody) &&
-        carPosition[1] < otherPosition[1] &&
-        carPosition[0] > otherPosition[0] - this.physicsShape.width + this.hasFootingPadding &&
-        carPosition[0] < otherPosition[0] + other.physicsShape.width - this.hasFootingPadding) {
+        carPosition[1] < otherPosition[1] - this.physicsShape.height + this.hasFootingPadding) {
           this.hasFooting = true
           return
         }
@@ -197,7 +194,7 @@ function Car(blockX, blockY) {
   }
   this.tryToJump = function() {
     if (this.mayJump()) {
-      this.physicsBody.applyImpulse([0, -this.jumpForce])
+      this.physicsBody.applyImpulse(this.jumpForce)
     }
   }
 }
