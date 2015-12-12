@@ -5,13 +5,41 @@ function Canvas() {
     this.element.width = innerWidth
     this.element.height = innerHeight
   }
+  this.clear = function() {
+    this.ctx.fillStyle = '#ffffff'
+    this.ctx.fillRect(0, 0, this.element.width, this.element.height)
+  }
+}
+
+function Controls() {
+  var that = this
+  this.zDown = false
+  this.xDown = false
+  this.init = function() {
+    onkeydown = this.onControlsEvent
+    onkeyup = this.onControlsEvent
+  }
+  this.onControlsEvent = function(event) {
+    var z = 90
+    var x = 88
+    if (event.type == 'keydown') {
+      if (event.keyCode == z) that.zDown = true
+      else if (event.keyCode == x) that.xDown = true
+    }
+    else if (event.type == 'keyup') {
+      if (event.keyCode == z) that.zDown = false
+      else if (event.keyCode == x) that.xDown = false
+    }
+  }
 }
 
 function Game() {
   var that = this
   this.canvas = new Canvas()
+  this.controls = new Controls()
   this.currentLevel = -1
   this.sprites = []
+  this.physics = new p2.World({gravity: [0, 100]})
   this.needsResize = function() {
     if (this.width != innerWidth || this.height != innerHeight)
       return true
@@ -26,6 +54,9 @@ function Game() {
   this.render = function() {
     requestAnimationFrame(that.render)
     if (that.needsResize()) that.resize()
+    that.applyControls()
+    that.applyPhysics()
+    that.canvas.clear()
     for (var sprite in that.sprites) {
       var currentSprite = that.sprites[sprite]
       that.drawSprite(currentSprite)
@@ -33,7 +64,8 @@ function Game() {
   }
   this.drawSprite = function(sprite) {
     var ctx = this.canvas.ctx
-    ctx.fillRect(sprite.x, sprite.y, sprite.blockSize, sprite.blockSize)
+    ctx.fillStyle = '#000000'
+    ctx.fillRect(sprite.x, sprite.y, sprite.width, sprite.height)
   }
   this.loadData = function(callback) {
     var xhr = new XMLHttpRequest()
@@ -51,29 +83,78 @@ function Game() {
       var currentType = level[type]
       for (var sprite in currentType) {
         var currentSprite = currentType[sprite]
-        that.sprites.push( new window[type](currentSprite[0], currentSprite[1]) )
+        that.addSprite( new window[type](currentSprite[0], currentSprite[1]) )
       }
     }
   }
   this.start = function() {
+    this.controls.init()
     this.loadData(function() {
       that.loadNextLevel()
       that.render()
     })
   }
+  this.addSprite = function(sprite) {
+    that.physics.addBody(sprite.physicsBody)
+    that.sprites.push(sprite)
+    if (sprite instanceof Car) that.car = sprite
+  }
+  this.applyPhysics = function() {
+    that.physics.step(1/60)
+    for (var sprite in that.sprites) {
+      var currentSprite = that.sprites[sprite]
+      currentSprite.x = currentSprite.physicsBody.position[0]
+      currentSprite.y = currentSprite.physicsBody.position[1]
+    }
+  }
+  this.applyControls = function() {
+    if (this.controls.zDown) this.car.physicsBody.applyForce([500, 0])
+  }
 }
 
 function Sprite() {
   this.blockSize = 64
-  this.setSize = function(blockX, blockY) {
+  this.setupDescendant = function(blockX, blockY, blockWidth, blockHeight, mass) {
     this.x = blockX * this.blockSize
     this.y = blockY * this.blockSize
+    this.width = blockWidth * this.blockSize
+    this.height = blockHeight * this.blockSize
+    this.physicsBody = new p2.Body({
+      mass: mass,
+      position: [this.x, this.y],
+      fixedRotation: true
+    })
+    this.physicsShape = new p2.Box({width: this.width, height: this.height})
+    this.physicsBody.addShape(this.physicsShape)
   }
 }
 
-Bush.prototype = new Sprite()
+Scenery.prototype = new Sprite()
+function Scenery(blockX, blockY, blockWidth, blockHeight) {
+  this.mass = 0
+  this.setupDescendant(blockX, blockY, blockWidth, blockHeight, this.mass)
+}
+
+Bush.prototype = new Scenery()
 function Bush(blockX, blockY) {
-  this.setSize(blockX, blockY)
+  this.width = 1
+  this.height = 1
+  this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
+}
+
+GroundBlock.prototype = new Scenery()
+function GroundBlock(blockX, blockY) {
+  this.width = 10
+  this.height = 1
+  this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
+}
+
+Car.prototype = new Sprite()
+function Car(blockX, blockY) {
+  this.width = 1
+  this.height = 1
+  this.mass = 5
+  this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
 }
 
 
