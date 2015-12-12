@@ -41,6 +41,7 @@ function Game() {
   this.sprites = []
   this.physics = new p2.World({gravity: [0, 1000]})
   this.blockSize = 64
+  this.cameraPosition = []
   this.needsResize = function() {
     if (this.width != innerWidth || this.height != innerHeight)
       return true
@@ -67,6 +68,8 @@ function Game() {
     var ctx = this.canvas.ctx
     var x = sprite.physicsBody.position[0] - sprite.physicsShape.width / 2
     var y = sprite.physicsBody.position[1] - sprite.physicsShape.height / 2
+    x -= this.cameraPosition[0]
+    y -= this.cameraPosition[1]
     var width = sprite.physicsShape.width
     var height = sprite.physicsShape.height
     ctx.fillStyle = '#000000'
@@ -111,6 +114,8 @@ function Game() {
     this.car.checkIfHasFooting()
     if (this.controls.zDown) this.car.accelerate()
     if (this.controls.xDown) this.car.tryToJump()
+    this.cameraPosition[0] = this.car.physicsBody.position[0] - this.width / 2
+    this.cameraPosition[1] = this.car.physicsBody.position[1] - this.height / 2
   }
 }
 
