@@ -64,6 +64,7 @@ function Game() {
   }
   this.drawSprite = function(sprite) {
     var ctx = this.canvas.ctx
+    var x = sprite.physicsBody.width * sprite.blockSize
     ctx.fillStyle = '#000000'
     ctx.fillRect(sprite.x, sprite.y, sprite.width, sprite.height)
   }
@@ -108,7 +109,7 @@ function Game() {
     }
   }
   this.applyControls = function() {
-    if (this.controls.zDown) this.car.applyGas()
+    if (this.controls.zDown) this.car.accelerate()
     if (this.controls.xDown) this.car.tryToJump()
   }
 }
@@ -156,7 +157,7 @@ function Car(blockX, blockY) {
   this.height = 1
   this.mass = 5
   this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
-  this.applyGas = function() {
+  this.accelerate = function() {
     this.physicsBody.applyForce([500, 0])
   }
   this.tryToJump = function() {
