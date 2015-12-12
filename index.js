@@ -108,7 +108,8 @@ function Game() {
     }
   }
   this.applyControls = function() {
-    if (this.controls.zDown) this.car.physicsBody.applyForce([500, 0])
+    if (this.controls.zDown) this.car.applyGas()
+    if (this.controls.xDown) this.car.tryToJump()
   }
 }
 
@@ -155,6 +156,28 @@ function Car(blockX, blockY) {
   this.height = 1
   this.mass = 5
   this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
+  this.applyGas = function() {
+    this.physicsBody.applyForce([500, 0])
+  }
+  this.tryToJump = function() {
+    // this.physicsBody.applyForce([0, -5000])
+    for (var sprite in game.sprites) {
+      var currentSprite = game.sprites[sprite]
+      var car = this.physicsBody
+      var other = currentSprite.physicsBody
+      if (car.overlaps(other) && // there is a collision and
+        car.position[1] < other.position[1]) { // car is above
+          var distanceToRight = Math.abs(car.position[0] - other.position[0])
+          var distanceToLeft = Math.abs(car.position[0] - (other.position[0] + other.shapes[0].width) )
+          if (distanceToRight < distanceToLeft) { // on right
+            console.log('on right')
+          }
+          else { // on left
+
+          }
+      }
+    }
+  }
 }
 
 
