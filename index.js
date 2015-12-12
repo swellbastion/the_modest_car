@@ -40,6 +40,7 @@ function Game() {
   this.currentLevel = -1
   this.sprites = []
   this.physics = new p2.World({gravity: [0, 1000]})
+  this.blockSize = 64
   this.needsResize = function() {
     if (this.width != innerWidth || this.height != innerHeight)
       return true
@@ -105,11 +106,6 @@ function Game() {
   }
   this.applyPhysics = function() {
     that.physics.step(1/60)
-    for (var sprite in that.sprites) {
-      var currentSprite = that.sprites[sprite]
-      currentSprite.x = currentSprite.physicsBody.position[0]
-      currentSprite.y = currentSprite.physicsBody.position[1]
-    }
   }
   this.applyControls = function() {
     this.car.checkIfHasFooting()
@@ -119,18 +115,14 @@ function Game() {
 }
 
 function Sprite() {
-  this.blockSize = 64
   this.setupDescendant = function(blockX, blockY, blockWidth, blockHeight, mass) {
-    this.x = blockX * this.blockSize
-    this.y = blockY * this.blockSize
-    this.width = blockWidth * this.blockSize
-    this.height = blockHeight * this.blockSize
     this.physicsBody = new p2.Body({
       mass: mass,
-      position: [this.x, this.y],
+      position: [blockX * game.blockSize, blockY * game.blockSize],
       fixedRotation: true
     })
-    this.physicsShape = new p2.Box({width: this.width, height: this.height})
+    console.log('sprite pixel width', blockWidth * game.blockSize)
+    this.physicsShape = new p2.Box({width: blockWidth * game.blockSize, height: blockHeight * game.blockSize})
     this.physicsBody.addShape(this.physicsShape)
   }
 }
@@ -138,13 +130,11 @@ function Sprite() {
 Scenery.prototype = new Sprite()
 function Scenery(blockX, blockY, blockWidth, blockHeight) {
   this.mass = 0
-  this.setupDescendant(blockX, blockY, blockWidth, blockHeight, this.mass)
 }
 
 Mover.prototype = new Sprite()
 function Mover(blockX, blockY, blockWidth, blockHeight) {
   this.mass = 1
-  this.setupDescendant(blockX, blockY, blockWidth, blockHeight, this.mass)
 }
 
 Bush.prototype = new Scenery()
@@ -156,7 +146,7 @@ function Bush(blockX, blockY) {
 
 GroundBlock.prototype = new Scenery()
 function GroundBlock(blockX, blockY) {
-  this.width = 10
+  this.width = 5
   this.height = 1
   this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
 }
