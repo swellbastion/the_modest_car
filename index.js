@@ -39,7 +39,7 @@ function Game() {
   this.controls = new Controls()
   this.currentLevel = -1
   this.sprites = []
-  this.physics = new p2.World({gravity: [0, 100]})
+  this.physics = new p2.World({gravity: [0, 1000]})
   this.needsResize = function() {
     if (this.width != innerWidth || this.height != innerHeight)
       return true
@@ -64,9 +64,12 @@ function Game() {
   }
   this.drawSprite = function(sprite) {
     var ctx = this.canvas.ctx
-    var x = sprite.physicsBody.width * sprite.blockSize
+    var x = sprite.physicsBody.position[0] - sprite.physicsShape.width / 2
+    var y = sprite.physicsBody.position[1] - sprite.physicsShape.height / 2
+    var width = sprite.physicsShape.width
+    var height = sprite.physicsShape.height
     ctx.fillStyle = '#000000'
-    ctx.fillRect(sprite.x, sprite.y, sprite.width, sprite.height)
+    ctx.fillRect(x, y, width, height)
   }
   this.loadData = function(callback) {
     var xhr = new XMLHttpRequest()
@@ -109,6 +112,7 @@ function Game() {
     }
   }
   this.applyControls = function() {
+    this.car.checkIfHasFooting()
     if (this.controls.zDown) this.car.accelerate()
     if (this.controls.xDown) this.car.tryToJump()
   }
@@ -137,6 +141,12 @@ function Scenery(blockX, blockY, blockWidth, blockHeight) {
   this.setupDescendant(blockX, blockY, blockWidth, blockHeight, this.mass)
 }
 
+Mover.prototype = new Sprite()
+function Mover(blockX, blockY, blockWidth, blockHeight) {
+  this.mass = 1
+  this.setupDescendant(blockX, blockY, blockWidth, blockHeight, this.mass)
+}
+
 Bush.prototype = new Scenery()
 function Bush(blockX, blockY) {
   this.width = 1
@@ -151,32 +161,45 @@ function GroundBlock(blockX, blockY) {
   this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
 }
 
-Car.prototype = new Sprite()
+Car.prototype = new Mover()
 function Car(blockX, blockY) {
   this.width = 1
   this.height = 1
-  this.mass = 5
+  this.jumpForce = 500
+  this.jumpDelay = 100
   this.setupDescendant(blockX, blockY, this.width, this.height, this.mass)
   this.accelerate = function() {
-    this.physicsBody.applyForce([500, 0])
+    if (this.hasFooting) this.physicsBody.applyForce([500, 0])
   }
-  this.tryToJump = function() {
-    // this.physicsBody.applyForce([0, -5000])
+  this.mayJump = function() {
+    var now = Date.now()
+    if (now < this.lastJumpTime + this.jumpDelay) return false
+    else if (this.hasFooting) {
+      this.lastJumpTime = now
+      return true
+    }
+  }
+  this.checkIfHasFooting = function() {
     for (var sprite in game.sprites) {
       var currentSprite = game.sprites[sprite]
       var car = this.physicsBody
+      var carShape = this.physicsShape
       var other = currentSprite.physicsBody
-      if (car.overlaps(other) && // there is a collision and
-        car.position[1] < other.position[1]) { // car is above
-          var distanceToRight = Math.abs(car.position[0] - other.position[0])
-          var distanceToLeft = Math.abs(car.position[0] - (other.position[0] + other.shapes[0].width) )
-          if (distanceToRight < distanceToLeft) { // on right
-            console.log('on right')
-          }
-          else { // on left
-
-          }
-      }
+      var otherShape = currentSprite.physicsShape
+      var padding = 2
+      if (car.overlaps(other) &&
+        car.position[1] < other.position[1] &&
+        car.position[0] > other.position[0] - carShape.width + padding &&
+        car.position[0] < other.position[0] + otherShape.width - padding) {
+          this.hasFooting = true
+          return
+        }
+    }
+    this.hasFooting = false
+  }
+  this.tryToJump = function() {
+    if (this.mayJump()) {
+      this.physicsBody.applyImpulse([0, -this.jumpForce])
     }
   }
 }
