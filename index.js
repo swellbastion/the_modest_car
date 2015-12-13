@@ -65,6 +65,8 @@ function Game() {
       break
       case 'finished': that.renderFinished()
       break
+      case 'loading': that.renderLoading()
+      break
     }
   }
   this.renderPlaying = function() {
@@ -101,6 +103,16 @@ function Game() {
     var finishedText = 'THE END... for now. Thanks for playing! ;[]'
     var textMeasure = ctx.measureText(finishedText)
     ctx.fillText(finishedText, this.width / 2 - textMeasure.width / 2, this.height / 2)
+  }
+  this.renderLoading = function() {
+    var ctx = this.canvas.ctx
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, this.width, this.height)
+    ctx.fillStyle = 'black'
+    ctx.font = '20px monospace'
+    var loadingText = 'loading'
+    var textMeasure = ctx.measureText(loadingText)
+    ctx.fillText(loadingText, this.width / 2 - textMeasure.width / 2, this.height / 2)
   }
   this.drawSprite = function(sprite) {
     var ctx = this.canvas.ctx
@@ -141,6 +153,7 @@ function Game() {
     that.loadLevel(that.currentLevel)
   }
   this.start = function() {
+    this.renderLoading()
     this.controls.init()
     this.loadData(function() {
       that.loadNextLevel()
