@@ -39,8 +39,7 @@ function Game() {
   this.canvas = new Canvas()
   this.controls = new Controls()
   this.currentLevel = -1
-  this.sprites = []
-  this.physics = new p2.World({gravity: [0, 1000]})
+  this.physics = new p2.World()
   this.blockSize = 64
   this.cameraPosition = []
   this.needsResize = function() {
@@ -76,9 +75,17 @@ function Game() {
     }
   }
   this.renderDead = function() {
-    var ctx = this.canvas.ctx
-    ctx.fillStyle = '#000000'
-    ctx.fillRect(0, 0, 300, 300)
+    this.deathOpacity += .01
+    if (this.deathOpacity < 1) {
+      var ctx = this.canvas.ctx
+      ctx.globalAlpha = this.deathOpacity
+      this.canvas.clear()
+      ctx.globalAlpha = 1
+    }
+    else {
+      this.loadLevel()
+      this.state = 'playing'
+    }
   }
   this.drawSprite = function(sprite) {
     var ctx = this.canvas.ctx
@@ -100,8 +107,10 @@ function Game() {
     }
     xhr.send()
   }
-  this.loadNextLevel = function() {
-    that.currentLevel++
+  this.loadLevel = function() {
+    that.physics.clear()
+    that.physics.gravity = [0, 1000]
+    that.sprites = []
     var level = that.levels[that.currentLevel]
     for (var type in level) {
       var currentType = level[type]
@@ -110,6 +119,10 @@ function Game() {
         that.addSprite( new window[type](currentSprite) )
       }
     }
+  }
+  this.loadNextLevel = function() {
+    that.currentLevel++
+    that.loadLevel(that.currentLevel)
   }
   this.start = function() {
     this.controls.init()
@@ -194,7 +207,9 @@ function Car(blockDimensions) {
   this.minCrashSpeed = 200
   this.deadHeight = 600
   this.accelerate = function() {
-    if (this.hasFooting) this.physicsBody.applyForce(this.accelerateForce)
+    if (this.hasFooting) {
+      this.physicsBody.applyForce(this.accelerateForce)
+    }
   }
   this.mayJump = function() {
     var now = Date.now()
@@ -231,7 +246,10 @@ function Car(blockDimensions) {
   this.checkIfDead = function() {
     var currentXVelocity = this.physicsBody.velocity[0]
     if ( this.lastXVelocity > this.minCrashSpeed && Math.abs(currentXVelocity) < Math.abs(this.lastXVelocity / 2) ) {
-      if (!game.car.hasBomb) game.state = 'dead'
+      if (!game.car.hasBomb) {
+        game.deathOpacity = 0
+        this.die()
+      }
       else {
         for (var sprite in game.sprites) {
           var currentSprite = game.sprites[sprite]
@@ -247,7 +265,7 @@ function Car(blockDimensions) {
         }
       }
     }
-    if ( Math.abs(this.physicsBody.position[1]) > this.deadHeight ) game.state = 'dead'
+    if ( Math.abs(this.physicsBody.position[1]) > this.deadHeight ) this.die()
     this.lastXVelocity = currentXVelocity
   }
   this.checkIfGettingBomb = function() {
@@ -260,6 +278,10 @@ function Car(blockDimensions) {
           game.car.hasBomb = true
       }
     }
+  }
+  this.die = function() {
+    game.deathOpacity = 0
+    game.state = 'dead'
   }
 }
 
