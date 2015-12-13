@@ -38,7 +38,7 @@ function Game() {
   this.state = 'playing'
   this.canvas = new Canvas()
   this.controls = new Controls()
-  this.currentLevel = -1
+  this.currentLevel = 0
   this.physics = new p2.World()
   this.blockSize = 64
   this.cameraPosition = []
@@ -296,7 +296,7 @@ Bomb.prototype = new Powerup()
 function Bomb(blockDimensions) {
   this.color = 'red'
   this.hasBomb = false
-  this.setupDescendant(blockDimensions)
+  this.__proto__.setupDescendant(blockDimensions)
 }
 
 Elevator.prototype = new Mover()
