@@ -163,17 +163,6 @@ function Sprite() {
   }
 }
 
-Powerup.prototype = new Sprite()
-function Powerup(blockDimensions) {
-  this.setupDescendant = function(blockDimensions) {
-    blockDimensions[2] = 1
-    blockDimensions[3] = 1
-    this.mass = 0
-    this.__proto__.setupDescendant(blockDimensions, this.mass)
-    this.physicsShape.sensor = true
-  }
-}
-
 Scenery.prototype = new Sprite()
 function Scenery() {
   this.mass = 0
@@ -292,11 +281,14 @@ function Car(blockDimensions) {
   }
 }
 
-Bomb.prototype = new Powerup()
+Bomb.prototype = new Sprite()
 function Bomb(blockDimensions) {
+  blockDimensions[2] = 1
+  blockDimensions[3] = 1
+  this.mass = 0
   this.color = 'red'
-  this.hasBomb = false
-  this.__proto__.setupDescendant(blockDimensions)
+  this.setupDescendant(blockDimensions, this.mass)
+  this.physicsShape.sensor = true
 }
 
 Elevator.prototype = new Mover()
