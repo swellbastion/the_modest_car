@@ -22,9 +22,11 @@ function Controls() {
   this.onControlsEvent = function(event) {
     var z = 90
     var x = 88
+    var r = 82
     if (event.type == 'keydown') {
       if (event.keyCode == z) that.zDown = true
       else if (event.keyCode == x) that.xDown = true
+      else if (event.keyCode == r) game.car.die()
     }
     else if (event.type == 'keyup') {
       if (event.keyCode == z) that.zDown = false
