@@ -67,7 +67,8 @@ function Game() {
     that.applyControls()
     that.applyPhysics()
     that.car.checkIfDead()
-    that.car.checkIfGettingBomb()
+    that.car.checkInteractions()
+    that.elevator.update()
     that.canvas.clear()
     for (var sprite in that.sprites) {
       var currentSprite = that.sprites[sprite]
@@ -135,6 +136,7 @@ function Game() {
     that.physics.addBody(sprite.physicsBody)
     that.sprites.push(sprite)
     if (sprite instanceof Car) that.car = sprite
+    else if (sprite instanceof Elevator) that.elevator = sprite
   }
   this.applyPhysics = function() {
     that.physics.step(1/60)
@@ -268,14 +270,16 @@ function Car(blockDimensions) {
     if ( Math.abs(this.physicsBody.position[1]) > this.deadHeight ) this.die()
     this.lastXVelocity = currentXVelocity
   }
-  this.checkIfGettingBomb = function() {
+  this.checkInteractions = function() {
     for (var sprite in game.sprites) {
       var currentSprite = game.sprites[sprite]
-      if (currentSprite instanceof Bomb &&
-        this.physicsBody.overlaps(currentSprite.physicsBody)) {
-          game.sprites.splice(sprite, 1)
-          game.car.color = 'orange'
-          game.car.hasBomb = true
+
+      if (this.physicsBody.overlaps(currentSprite.physicsBody)) {
+        if (currentSprite instanceof Bomb) {
+            game.sprites.splice(sprite, 1)
+            game.car.color = 'orange'
+            game.car.hasBomb = true
+        }
       }
     }
   }
@@ -290,6 +294,18 @@ function Bomb(blockDimensions) {
   this.color = 'red'
   this.hasBomb = false
   this.setupDescendant(blockDimensions)
+}
+
+Elevator.prototype = new Mover()
+function Elevator(blockDimensions) {
+  this.color = 'green'
+  this.setupDescendant(blockDimensions, this.mass)
+  this.physicsBody.gravityScale = 0
+  this.update = function() {
+    if (this.physicsBody.overlaps(game.car.physicsBody)) {
+      this.physicsBody.gravityScale = -2
+    }
+  }
 }
 
 
