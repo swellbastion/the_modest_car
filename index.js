@@ -126,6 +126,7 @@ function Game() {
     ctx.fillRect(x, y, width, height)
   }
   this.loadData = function(callback) {
+    var numberOfFiles = 5
     var xhr = new XMLHttpRequest()
     xhr.open('get', 'levels.json')
     xhr.onload = function() {
@@ -133,6 +134,14 @@ function Game() {
       callback()
     }
     xhr.send()
+    this.sounds = {
+      jump: new Audio('jump.wav'),
+      accelerate: new Audio('accelerate.wav'),
+      crash: new Audio('crash.wav'),
+      die: new Audio('die.wav'),
+      bomb: new Audio('bomb.wav'),
+      bombGet: new Audio('bomb_get.wav')
+    }
   }
   this.loadLevel = function() {
     that.physics.clear()
@@ -226,6 +235,7 @@ function Car(blockDimensions) {
   this.minCrashSpeed = 200
   this.deadHeight = 600
   this.accelerate = function() {
+    game.sounds.accelerate.play()
     if (this.hasFooting) {
       this.physicsBody.applyForce(this.accelerateForce)
     }
@@ -260,20 +270,23 @@ function Car(blockDimensions) {
   this.tryToJump = function() {
     if (this.mayJump()) {
       this.physicsBody.applyImpulse(this.jumpForce)
+      game.sounds.jump.play()
     }
   }
   this.checkIfDead = function() {
     var currentXVelocity = this.physicsBody.velocity[0]
     if ( this.lastXVelocity > this.minCrashSpeed && Math.abs(currentXVelocity) < Math.abs(this.lastXVelocity / 2) ) {
       if (!game.car.hasBomb) {
+        game.sounds.crash.play()
         game.deathOpacity = 0
-        this.die()
+        game.state = 'dead'
       }
       else {
         for (var sprite in game.sprites) {
           var currentSprite = game.sprites[sprite]
           if (this.physicsBody.overlaps(currentSprite.physicsBody) &&
               Math.abs( this.physicsBody.position[1] - currentSprite.physicsBody.position[1] ) < currentSprite.physicsShape.height * .9 ) {
+            game.sounds.bomb.play()
             game.physics.removeBody(currentSprite.physicsBody)
             game.sprites.splice(sprite, 1)
             game.car.physicsBody.velocity[0] = this.lastXVelocity
@@ -296,6 +309,7 @@ function Car(blockDimensions) {
 
       if (this.physicsBody.overlaps(currentSprite.physicsBody)) {
         if (currentSprite instanceof Bomb) {
+            game.sounds.bombGet.play()
             game.sprites.splice(sprite, 1)
             game.car.color = 'orange'
             game.car.hasBomb = true
@@ -304,6 +318,7 @@ function Car(blockDimensions) {
     }
   }
   this.die = function() {
+    game.sounds.die.play()
     game.deathOpacity = 0
     game.state = 'dead'
   }
