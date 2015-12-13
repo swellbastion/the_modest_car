@@ -33,17 +33,6 @@ function Controls() {
   }
 }
 
-function DeltaUpdater() {
-  this.init = function() {
-    this.lastDelta = Date.now() / 1000
-  }
-  this.update = function() {
-    var now = Date.now() / 1000
-    game.delta = now - this.lastDelta
-    this.lastDelta = now
-  }
-}
-
 function Game() {
   var that = this
   this.canvas = new Canvas()
@@ -53,7 +42,6 @@ function Game() {
   this.physics = new p2.World({gravity: [0, 1000]})
   this.blockSize = 64
   this.cameraPosition = []
-  this.deltaUpdater = new DeltaUpdater()
   this.needsResize = function() {
     if (this.width != innerWidth || this.height != innerHeight)
       return true
@@ -68,7 +56,6 @@ function Game() {
   this.render = function() {
     requestAnimationFrame(that.render)
     if (that.needsResize()) that.resize()
-    that.deltaUpdater.update()
     that.applyControls()
     that.applyPhysics()
     that.canvas.clear()
@@ -109,7 +96,6 @@ function Game() {
     }
   }
   this.start = function() {
-    this.deltaUpdater.init()
     this.controls.init()
     this.loadData(function() {
       that.loadNextLevel()
@@ -122,7 +108,7 @@ function Game() {
     if (sprite instanceof Car) that.car = sprite
   }
   this.applyPhysics = function() {
-    that.physics.step(that.delta)
+    that.physics.step(1/60)
   }
   this.applyControls = function() {
     this.car.checkIfHasFooting()
@@ -172,15 +158,12 @@ function Car(blockDimensions) {
   blockDimensions[2] = 1
   blockDimensions[3] = 1
   this.jumpForce = [0, -500]
-  this.accelerateForce = 30000
+  this.accelerateForce = [500, 0]
   this.jumpDelay = 100
   this.hasFootingPadding = 1
   this.setupDescendant(blockDimensions, this.mass)
   this.accelerate = function() {
-    console.log(this.accelerateForce * game.delta)
-    if (this.hasFooting)
-      this.physicsBody.applyForce(
-        [this.accelerateForce * game.delta, 0])
+    if (this.hasFooting) this.physicsBody.applyForce(this.accelerateForce)
   }
   this.mayJump = function() {
     var now = Date.now()
