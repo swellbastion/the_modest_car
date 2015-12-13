@@ -58,23 +58,23 @@ function Game() {
     requestAnimationFrame(that.render)
     if (that.needsResize()) that.resize()
     switch (that.state) {
-      case 'playing': that.renderGame()
+      case 'playing': that.renderPlaying()
       break
-      case 'crashed': that.renderCrashed()
+      case 'dead': that.renderDead()
       break
     }
   }
-  this.renderGame = function() {
+  this.renderPlaying = function() {
     that.applyControls()
     that.applyPhysics()
-    that.car.checkIfCrashed()
+    that.car.checkIfDead()
     that.canvas.clear()
     for (var sprite in that.sprites) {
       var currentSprite = that.sprites[sprite]
       that.drawSprite(currentSprite)
     }
   }
-  this.renderCrashed = function() {
+  this.renderDead = function() {
     var ctx = this.canvas.ctx
     ctx.fillStyle = '#000000'
     ctx.fillRect(0, 0, 300, 300)
@@ -214,9 +214,10 @@ function Car(blockDimensions) {
       this.physicsBody.applyImpulse(this.jumpForce)
     }
   }
-  this.checkIfCrashed = function() {
+  this.checkIfDead = function() {
     var currentXVelocity = this.physicsBody.velocity[0]
-    if ( this.lastXVelocity > this.minCrashSpeed && Math.abs(currentXVelocity) < Math.abs(this.lastXVelocity / 2) ) game.state = 'crashed'
+    if ( this.lastXVelocity > this.minCrashSpeed && Math.abs(currentXVelocity) < Math.abs(this.lastXVelocity / 2) ) game.state = 'dead'
+    if ( Math.abs(this.physicsBody.position[1]) > 500 ) game.state = 'dead'
     this.lastXVelocity = currentXVelocity
   }
 }
