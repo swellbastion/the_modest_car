@@ -256,7 +256,7 @@ function Car(blockDimensions) {
         for (var sprite in game.sprites) {
           var currentSprite = game.sprites[sprite]
           if (this.physicsBody.overlaps(currentSprite.physicsBody) &&
-              Math.abs( this.physicsBody.position[1] - currentSprite.physicsBody.position[1] ) < this.physicsShape.height * .9 ) {
+              Math.abs( this.physicsBody.position[1] - currentSprite.physicsBody.position[1] ) < currentSprite.physicsShape.height * .9 ) {
             game.physics.removeBody(currentSprite.physicsBody)
             game.sprites.splice(sprite, 1)
             game.car.physicsBody.velocity[0] = this.lastXVelocity
@@ -267,7 +267,10 @@ function Car(blockDimensions) {
         }
       }
     }
-    if ( Math.abs(this.physicsBody.position[1]) > this.deadHeight ) this.die()
+    if ( Math.abs(this.physicsBody.position[1]) > this.deadHeight ) {
+      if (this.physicsBody.overlaps(game.elevator.physicsBody)) console.log('next level')
+      else this.die()
+    }
     this.lastXVelocity = currentXVelocity
   }
   this.checkInteractions = function() {
