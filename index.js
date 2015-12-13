@@ -38,7 +38,7 @@ function Game() {
   this.state = 'playing'
   this.canvas = new Canvas()
   this.controls = new Controls()
-  this.currentLevel = 0
+  this.currentLevel = -1
   this.physics = new p2.World()
   this.blockSize = 64
   this.cameraPosition = []
@@ -60,6 +60,8 @@ function Game() {
       case 'playing': that.renderPlaying()
       break
       case 'dead': that.renderDead()
+      break
+      case 'finished': that.renderFinished()
       break
     }
   }
@@ -87,6 +89,11 @@ function Game() {
       this.loadLevel()
       this.state = 'playing'
     }
+  }
+  this.renderFinished = function() {
+    var ctx = this.canvas.ctx
+    ctx.fillStyle = 'red'
+    ctx.fillRect(0, 0, this.width, this.height)
   }
   this.drawSprite = function(sprite) {
     var ctx = this.canvas.ctx
@@ -123,6 +130,7 @@ function Game() {
   }
   this.loadNextLevel = function() {
     that.currentLevel++
+    if (that.currentLevel == that.levels.length) game.state = 'finished'
     that.loadLevel(that.currentLevel)
   }
   this.start = function() {
@@ -257,7 +265,7 @@ function Car(blockDimensions) {
       }
     }
     if ( Math.abs(this.physicsBody.position[1]) > this.deadHeight ) {
-      if (this.physicsBody.overlaps(game.elevator.physicsBody)) console.log('next level')
+      if (this.physicsBody.overlaps(game.elevator.physicsBody)) game.loadNextLevel()
       else this.die()
     }
     this.lastXVelocity = currentXVelocity
