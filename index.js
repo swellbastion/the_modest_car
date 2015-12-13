@@ -68,6 +68,7 @@ function Game() {
     that.applyControls()
     that.applyPhysics()
     that.car.checkIfDead()
+    that.car.checkIfGettingBomb()
     that.canvas.clear()
     for (var sprite in that.sprites) {
       var currentSprite = that.sprites[sprite]
@@ -87,7 +88,7 @@ function Game() {
     y -= this.cameraPosition[1]
     var width = sprite.physicsShape.width
     var height = sprite.physicsShape.height
-    ctx.fillStyle = '#000000'
+    ctx.fillStyle = sprite.color
     ctx.fillRect(x, y, width, height)
   }
   this.loadData = function(callback) {
@@ -135,6 +136,7 @@ function Game() {
 }
 
 function Sprite() {
+  this.color = 'black'
   this.setupDescendant = function(blockDimensions, mass) {
     this.physicsBody = new p2.Body({
       mass: mass,
@@ -143,6 +145,17 @@ function Sprite() {
     })
     this.physicsShape = new p2.Box({width: blockDimensions[2] * game.blockSize, height: blockDimensions[3] * game.blockSize})
     this.physicsBody.addShape(this.physicsShape)
+  }
+}
+
+Powerup.prototype = new Sprite()
+function Powerup(blockDimensions) {
+  this.setupDescendant = function(blockDimensions) {
+    blockDimensions[2] = 1
+    blockDimensions[3] = 1
+    this.mass = 0
+    this.__proto__.setupDescendant(blockDimensions, this.mass)
+    this.physicsShape.sensor = true
   }
 }
 
@@ -178,7 +191,8 @@ function Car(blockDimensions) {
   this.hasFootingPadding = 1
   this.setupDescendant(blockDimensions, this.mass)
   this.lastXVelocity = 0
-  this.minCrashSpeed = 20
+  this.minCrashSpeed = 200
+  this.deadHeight = 600
   this.accelerate = function() {
     if (this.hasFooting) this.physicsBody.applyForce(this.accelerateForce)
   }
@@ -216,10 +230,44 @@ function Car(blockDimensions) {
   }
   this.checkIfDead = function() {
     var currentXVelocity = this.physicsBody.velocity[0]
-    if ( this.lastXVelocity > this.minCrashSpeed && Math.abs(currentXVelocity) < Math.abs(this.lastXVelocity / 2) ) game.state = 'dead'
-    if ( Math.abs(this.physicsBody.position[1]) > 500 ) game.state = 'dead'
+    if ( this.lastXVelocity > this.minCrashSpeed && Math.abs(currentXVelocity) < Math.abs(this.lastXVelocity / 2) ) {
+      if (!game.car.hasBomb) game.state = 'dead'
+      else {
+        for (var sprite in game.sprites) {
+          var currentSprite = game.sprites[sprite]
+          if (this.physicsBody.overlaps(currentSprite.physicsBody) &&
+              Math.abs( this.physicsBody.position[1] - currentSprite.physicsBody.position[1] ) < this.physicsShape.height * .9 ) {
+            game.physics.removeBody(currentSprite.physicsBody)
+            game.sprites.splice(sprite, 1)
+            game.car.physicsBody.velocity[0] = this.lastXVelocity
+            game.car.physicsBody.applyImpulse([300, -300])
+            this.color = 'black'
+            this.hasBomb = false
+          }
+        }
+      }
+    }
+    if ( Math.abs(this.physicsBody.position[1]) > this.deadHeight ) game.state = 'dead'
     this.lastXVelocity = currentXVelocity
   }
+  this.checkIfGettingBomb = function() {
+    for (var sprite in game.sprites) {
+      var currentSprite = game.sprites[sprite]
+      if (currentSprite instanceof Bomb &&
+        this.physicsBody.overlaps(currentSprite.physicsBody)) {
+          game.sprites.splice(sprite, 1)
+          game.car.color = 'orange'
+          game.car.hasBomb = true
+      }
+    }
+  }
+}
+
+Bomb.prototype = new Powerup()
+function Bomb(blockDimensions) {
+  this.color = 'red'
+  this.hasBomb = false
+  this.setupDescendant(blockDimensions)
 }
 
 
