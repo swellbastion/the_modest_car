@@ -1,3 +1,5 @@
+'use strict'
+
 function Canvas() {
   this.element = document.querySelector('canvas')
   this.ctx = this.element.getContext('2d')
