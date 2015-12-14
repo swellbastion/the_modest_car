@@ -6,7 +6,7 @@ function Canvas() {
     this.element.height = innerHeight
   }
   this.clear = function() {
-    this.ctx.fillStyle = '#ffffff'
+    this.ctx.fillStyle = 'white'
     this.ctx.fillRect(0, 0, this.element.width, this.element.height)
   }
 }
@@ -37,6 +37,7 @@ function Controls() {
 
 function Game() {
   var that = this
+  this.startTime = Date.now()
   this.state = 'playing'
   this.canvas = new Canvas()
   this.controls = new Controls()
@@ -68,6 +69,7 @@ function Game() {
       case 'loading': that.renderLoading()
       break
     }
+    if (Date.now() < that.startTime + 5000) that.renderControls()
   }
   this.renderPlaying = function() {
     that.applyControls()
@@ -113,6 +115,13 @@ function Game() {
     var loadingText = 'loading'
     var textMeasure = ctx.measureText(loadingText)
     ctx.fillText(loadingText, this.width / 2 - textMeasure.width / 2, this.height / 2)
+  }
+  this.renderControls = function() {
+    var ctx = this.canvas.ctx
+    ctx.fillStyle = 'black'
+    ctx.font = '20px monospace'
+    var text = 'z = accelerate    x = jump'
+    ctx.fillText(text, 5, 20)
   }
   this.drawSprite = function(sprite) {
     var ctx = this.canvas.ctx
