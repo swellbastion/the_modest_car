@@ -120,7 +120,7 @@ function Game() {
     var ctx = this.canvas.ctx
     ctx.fillStyle = 'black'
     ctx.font = '20px monospace'
-    var text = 'z = accelerate    x = jump'
+    var text = 'z = accelerate   x = jump   r = reset level'
     ctx.fillText(text, 5, 20)
   }
   this.drawSprite = function(sprite) {
