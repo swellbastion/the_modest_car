@@ -41,7 +41,7 @@ function Game() {
   this.state = 'playing'
   this.canvas = new Canvas()
   this.controls = new Controls()
-  this.currentLevel = -1
+  this.currentLevel = 1
   this.physics = new p2.World()
   this.blockSize = 64
   this.cameraPosition = []
